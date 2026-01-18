@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Poco | User Admin</title>
+</head>
+<body class="bg-[#0f172a] text-white p-4">
+    <header class="mb-6 flex items-center gap-3">
+        <button onclick="window.history.back()" class="text-blue-500 text-xl">←</button>
+        <h1 class="text-xl font-bold">User Management</h1>
+    </header>
+
+    <div class="relative mb-8">
+        <input id="search-input" type="text" placeholder="Search @username..." 
+               class="w-full bg-gray-800 border-none rounded-2xl p-4 pl-12 outline-none focus:ring-2 focus:ring-blue-500">
+        <span class="absolute left-4 top-4 text-gray-500">🔍</span>
+        <button onclick="performSearch()" class="absolute right-3 top-2 bg-blue-600 px-4 py-2 rounded-xl text-sm font-bold">Find</button>
+    </div>
+
+    <div id="user-card" class="hidden animate-slide-up">
+        <div class="bg-gray-800 rounded-3xl p-6 border border-gray-700 shadow-2xl">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="h-16 w-16 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-2xl font-black">
+                    <span id="card-initial">?</span>
+                </div>
+                <div>
+                    <h2 id="card-name" class="text-xl font-bold">Full Name</h2>
+                    <p id="card-username" class="text-blue-400 text-sm">@username</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-black/20 p-4 rounded-2xl border border-white/5">
+                    <p class="text-[10px] text-gray-400 uppercase font-black">Total Points</p>
+                    <input id="input-points" type="number" class="bg-transparent text-xl font-bold w-full outline-none text-blue-400">
+                </div>
+                <div class="bg-black/20 p-4 rounded-2xl border border-white/5">
+                    <p class="text-[10px] text-gray-400 uppercase font-black">Warnings</p>
+                    <input id="input-warnings" type="number" class="bg-transparent text-xl font-bold w-full outline-none text-red-400">
+                </div>
+            </div>
+
+            <button onclick="saveUserChanges()" class="w-full bg-blue-600 py-4 rounded-2xl font-black shadow-lg shadow-blue-900/40">UPDATE MEMBER</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        let currentUser = null;
+
+        async function performSearch() {
+            const username = document.getElementById('search-input').value.replace('@', '');
+            if(!username) return;
+
+            tg.HapticFeedback.impactOccurred('light');
+            const res = await fetch(`https://your-api.com/users/search/${tg.initDataUnsafe.chat?.id || 0}?username=${username}`);
+            const user = await res.json();
+
+            if(user) {
+                currentUser = user;
+                document.getElementById('user-card').classList.remove('hidden');
+                document.getElementById('card-name').innerText = user.full_name || "Unknown";
+                document.getElementById('card-username').innerText = `@${user.username}`;
+                document.getElementById('card-initial').innerText = (user.full_name || 'U')[0];
+                document.getElementById('input-points').value = user.points || 0;
+                document.getElementById('input-warnings').value = user.warning_count || 0;
+            } else {
+                alert("User not found in this group.");
+            }
+        }
+
+        async function saveUserChanges() {
+            tg.HapticFeedback.notificationOccurred('success');
+            const payload = {
+                chat_id: tg.initDataUnsafe.chat?.id,
+                user_id: currentUser.user_id,
+                points: parseInt(document.getElementById('input-points').value),
+                warnings: parseInt(document.getElementById('input-warnings').value)
+            };
+            
+            await fetch(`https://your-api.com/users/update-stats`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            tg.showAlert("User updated successfully!");
+        }
+    </script>
+</body>
+</html>

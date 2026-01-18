@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Poco Leaderboard</title>
+    <style>
+        body { background-color: var(--tg-theme-bg-color, #0f172a); color: var(--tg-theme-text-color, #ffffff); }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gold { background: linear-gradient(135deg, #fde047 0%, #ca8a04 100%); }
+    </style>
+</head>
+<body class="p-4 antialiased">
+
+    <div class="flex p-1 bg-gray-800/50 rounded-xl mb-8">
+        <button onclick="switchTab('daily')" id="tab-daily" class="flex-1 py-2 rounded-lg font-bold text-sm bg-blue-600">Daily 🌞</button>
+        <button onclick="switchTab('weekly')" id="tab-weekly" class="flex-1 py-2 rounded-lg font-bold text-sm text-gray-400">Weekly 📊</button>
+    </div>
+
+    <div id="podium" class="flex items-end justify-center gap-2 mb-10 h-40">
+        </div>
+
+    <div id="leaderboard-list" class="space-y-3">
+        </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        const API_BASE = "https://your-api.com";
+        const chatId = tg.initDataUnsafe.chat?.id || 0;
+
+        async function loadLeaderboard(type) {
+            const res = await fetch(`${API_BASE}/leaderboard/${type}/${chatId}`);
+            const data = await res.json();
+            renderUI(data, type);
+        }
+
+        function renderUI(data, type) {
+            const podium = document.getElementById('podium');
+            const list = document.getElementById('leaderboard-list');
+            podium.innerHTML = '';
+            list.innerHTML = '';
+
+            data.forEach((user, index) => {
+                const name = user.username || user.full_name || `User ${user.user_id}`;
+                const points = type === 'daily' ? user.points_daily : user.points;
+                
+                // Badges logic from your Python bot
+                let badges = "";
+                if (type === 'daily') {
+                    if (user.daily_wins > 0) badges += "⭐"; // Hall of Fame
+                    if (user.is_current_daily) badges += "👑"; // Current Champ
+                }
+
+                if (index < 3) {
+                    // Podium Logic (1st center, 2nd left, 3rd right)
+                    const height = [ "h-24", "h-32", "h-20" ][index]; // Simplified
+                    const medal = ["🥇", "🥈", "🥉"][index];
+                    podium.innerHTML += `
+                        <div class="flex flex-col items-center">
+                            <span class="text-2xl">${medal}</span>
+                            <div class="glass w-20 ${height} rounded-t-xl flex flex-col items-center justify-end p-2 border-b-4 border-blue-500">
+                                <span class="text-[10px] font-bold truncate w-full text-center">${name}${badges}</span>
+                                <span class="text-xs font-black">${points}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // List Logic (4-10)
+                    list.innerHTML += `
+                        <div class="glass flex items-center p-4 rounded-2xl">
+                            <span class="w-8 font-black text-gray-500">${index + 1}.</span>
+                            <div class="flex-1 font-bold">${name}${badges}</div>
+                            <div class="text-blue-400 font-mono font-bold">${points}</div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function switchTab(t) {
+            document.getElementById('tab-daily').className = t === 'daily' ? 'flex-1 py-2 rounded-lg font-bold text-sm bg-blue-600' : 'flex-1 py-2 rounded-lg font-bold text-sm text-gray-400';
+            document.getElementById('tab-weekly').className = t === 'weekly' ? 'flex-1 py-2 rounded-lg font-bold text-sm bg-blue-600' : 'flex-1 py-2 rounded-lg font-bold text-sm text-gray-400';
+            loadLeaderboard(t);
+        }
+
+        tg.expand();
+        loadLeaderboard('daily');
+    </script>
+</body>
+</html>

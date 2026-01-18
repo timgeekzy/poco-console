@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Poco | Filters</title>
+    <style>
+        body { background-color: var(--tg-theme-bg-color, #0f172a); color: var(--tg-theme-text-color, #ffffff); }
+        .item-card { background-color: var(--tg-theme-secondary-bg-color, #1e293b); }
+    </style>
+</head>
+<body class="p-4">
+    <div class="flex items-center gap-3 mb-6">
+        <button onclick="window.history.back()" class="text-blue-500 text-xl">←</button>
+        <h1 class="text-xl font-bold">Custom Filters</h1>
+    </div>
+
+    <div class="item-card p-4 rounded-2xl mb-6 shadow-sm">
+        <p class="text-xs text-gray-400 mb-2 uppercase font-bold">Add New Blocked Word</p>
+        <div class="flex gap-2">
+            <input id="new-word" type="text" placeholder="e.g. 'scam'" 
+                   class="flex-1 bg-black/20 border-none rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
+            <button onclick="handleAdd()" class="bg-blue-600 px-5 rounded-xl font-bold">Add</button>
+        </div>
+    </div>
+
+    <div id="filter-container" class="space-y-3">
+        <p class="text-center text-gray-500 py-10">Loading filters...</p>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        const API_BASE = "https://your-google-cloud-ip.com";
+        const chatId = tg.initDataUnsafe.chat?.id || 0;
+
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => window.history.back());
+
+        async function fetchFilters() {
+            const res = await fetch(`${API_BASE}/filters/${chatId}`);
+            const data = await res.json();
+            const container = document.getElementById('filter-container');
+            container.innerHTML = data.length === 0 ? '<p class="text-center text-gray-500 py-10">No active filters</p>' : '';
+            
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "item-card flex justify-between items-center p-4 rounded-2xl border border-gray-700/30 animate-fade-in";
+                div.innerHTML = `
+                    <span class="font-medium">${item.content}</span>
+                    <button onclick="handleDelete(${item.id})" class="text-red-500 p-2">🗑️</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function handleAdd() {
+            const word = document.getElementById('new-word').value;
+            if(!word) return;
+            
+            tg.HapticFeedback.impactOccurred('medium');
+            await fetch(`${API_BASE}/filters/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, content: word, filter_type: 'word' })
+            });
+            document.getElementById('new-word').value = '';
+            fetchFilters();
+        }
+
+        async function handleDelete(id) {
+            tg.HapticFeedback.notificationOccurred('warning');
+            if(confirm("Delete this filter?")) {
+                await fetch(`${API_BASE}/filters/delete/${id}`, { method: 'DELETE' });
+                fetchFilters();
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+
+        fetchFilters();
+    </script>
+</body>
+</html>

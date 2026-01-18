@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Poco Console</title>
+    <style>
+        body {
+            background-color: var(--tg-theme-bg-color, #0f172a);
+            color: var(--tg-theme-text-color, #ffffff);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card {
+            background-color: var(--tg-theme-secondary-bg-color, #1e293b);
+            transition: transform 0.1s ease;
+        }
+        .card:active { transform: scale(0.97); }
+    </style>
+</head>
+<body class="p-4 antialiased">
+
+    <header class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-[10px] font-black uppercase tracking-widest text-blue-500">Poco OS v2.1</h1>
+            <h2 id="admin-name" class="text-2xl font-bold italic">Loading...</h2>
+        </div>
+        <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center shadow-lg">
+            <span class="text-xl">🤖</span>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="card p-4 rounded-3xl border border-gray-700/50">
+            <p class="text-gray-400 text-[10px] uppercase font-bold">Filters Active</p>
+            <p id="stat-filters" class="text-xl font-black text-white">--</p>
+        </div>
+        <div class="card p-4 rounded-3xl border border-gray-700/50">
+            <p class="text-gray-400 text-[10px] uppercase font-bold">Leaderboard</p>
+            <p id="stat-votes" class="text-xl font-black text-white">--</p>
+        </div>
+    </div>
+
+    <h3 class="text-[10px] font-black text-gray-500 mb-4 px-1 uppercase tracking-widest">Modules</h3>
+    <div class="grid grid-cols-1 gap-3 mb-8">
+        
+        <a href="filters.html" class="card flex items-center p-4 rounded-3xl border border-gray-700/30">
+            <div class="bg-red-500/20 p-3 rounded-2xl mr-4 text-xl">🚫</div>
+            <div class="flex-1">
+                <h4 class="font-bold text-sm">Spam Filters</h4>
+                <p class="text-[10px] text-gray-400">Word & Link blocking</p>
+            </div>
+            <span class="text-gray-600">❯</span>
+        </a>
+
+        <a href="points.html" class="card flex items-center p-4 rounded-3xl border border-gray-700/30">
+            <div class="bg-yellow-500/20 p-3 rounded-2xl mr-4 text-xl">🏆</div>
+            <div class="flex-1">
+                <h4 class="font-bold text-sm">Leaderboard</h4>
+                <p class="text-[10px] text-gray-400">Daily & Weekly ranking</p>
+            </div>
+            <span class="text-gray-600">❯</span>
+        </a>
+
+        <a href="token.html" class="card flex items-center p-4 rounded-3xl border border-gray-700/30">
+            <div class="bg-green-500/20 p-3 rounded-2xl mr-4 text-xl">💎</div>
+            <div class="flex-1">
+                <h4 class="font-bold text-sm">Token Identity</h4>
+                <p class="text-[10px] text-gray-400">DexScreener & Ticker</p>
+            </div>
+            <span class="text-gray-600">❯</span>
+        </a>
+
+        <a href="users.html" class="card flex items-center p-4 rounded-3xl border border-gray-700/30">
+            <div class="bg-blue-500/20 p-3 rounded-2xl mr-4 text-xl">👤</div>
+            <div class="flex-1">
+                <h4 class="font-bold text-sm">Member Admin</h4>
+                <p class="text-[10px] text-gray-400">Manage points & warnings</p>
+            </div>
+            <span class="text-gray-600">❯</span>
+        </a>
+
+        <a href="boost.html" class="card flex items-center p-4 rounded-3xl border border-yellow-500/40 bg-yellow-500/5">
+            <div class="bg-yellow-500/20 p-3 rounded-2xl mr-4 text-xl">🔥</div>
+            <div class="flex-1">
+                <h4 class="font-bold text-sm text-yellow-500">Boost Center</h4>
+                <p class="text-[10px] text-yellow-600/60">Revenue & Slot management</p>
+            </div>
+            <span class="text-yellow-600">❯</span>
+        </a>
+
+    </div>
+
+    <div class="flex items-center justify-center gap-2 py-6 opacity-20">
+        <div class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
+        <span class="text-[9px] font-bold uppercase tracking-[0.2em]">Connection Secure</span>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        document.getElementById('admin-name').innerText = `Admin ${tg.initDataUnsafe.user?.first_name || 'User'}`;
+
+        async function fetchStats() {
+            try {
+                // Use the new URL from your Cloudflare terminal
+                const TUNNEL_URL = "https://constraint-employment-gaps-gets.trycloudflare.com"; 
+                const response = await fetch(`${TUNNEL_URL}/api/stats/${tg.initDataUnsafe.chat?.id || 0}`);
+                const data = await response.json();
+                
+                document.getElementById('stat-filters').innerText = data.filter_count || '0';
+                document.getElementById('stat-votes').innerText = data.user_count || '0';
+            } catch (e) {
+                console.log("Stats fetch failed", e);
+            }
+        }
+
+        fetchStats();
+    </script>
+</body>
+</html>

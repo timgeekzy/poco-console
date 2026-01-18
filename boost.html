@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Poco | Boost</title>
+</head>
+<body class="bg-[#0f172a] text-white p-4">
+    <header class="mb-6 flex items-center gap-3">
+        <button onclick="window.history.back()" class="text-blue-500 text-xl">←</button>
+        <h1 class="text-xl font-bold italic">Boost Center</h1>
+    </header>
+
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700">
+            <p class="text-[10px] text-gray-400 uppercase font-black">X2 Slots</p>
+            <p id="x2-slots" class="text-2xl font-bold">--/25</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700">
+            <p class="text-[10px] text-yellow-500 uppercase font-black">X5 God Mode</p>
+            <p id="x5-slots" class="text-2xl font-bold text-yellow-400">--/3</p>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <button onclick="selectBoost('x2', 0.15)" class="w-full bg-gray-800 p-5 rounded-3xl border border-gray-700 flex justify-between items-center active:scale-95 transition">
+            <div class="text-left">
+                <h3 class="font-bold text-lg">X2 Multiplier</h3>
+                <p class="text-xs text-gray-400">0.15 SOL / 24h</p>
+            </div>
+            <div class="bg-blue-600 px-4 py-2 rounded-xl font-bold">SELECT</div>
+        </button>
+
+        <button onclick="selectBoost('x5', 0.5)" class="w-full bg-yellow-600/10 p-5 rounded-3xl border border-yellow-600/30 flex justify-between items-center active:scale-95 transition">
+            <div class="text-left">
+                <h3 class="font-bold text-lg text-yellow-500">X5 GOD MODE</h3>
+                <p class="text-xs text-yellow-600/70">0.5 SOL / 24h + Global Broadcast</p>
+            </div>
+            <div class="bg-yellow-600 px-4 py-2 rounded-xl font-bold text-black">SELECT</div>
+        </button>
+    </div>
+
+    <div id="payment-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end">
+        <div class="bg-gray-900 w-full rounded-t-3xl p-8 animate-slide-up">
+            <h3 class="text-xl font-black mb-2">Finalize Boost</h3>
+            <p class="text-sm text-gray-400 mb-6">Send <span id="pay-amount" class="text-white font-bold">--</span> SOL to the address below:</p>
+            
+            <div class="bg-black/40 p-4 rounded-xl mb-6 break-all font-mono text-xs text-blue-400 border border-blue-900/30">
+                Your_Solana_Treasury_Address_Here
+            </div>
+
+            <input id="txid-input" type="text" placeholder="Paste TXID here..." 
+                   class="w-full bg-gray-800 border-none rounded-xl p-4 mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+            
+            <button onclick="submitBoost()" class="w-full bg-blue-600 py-4 rounded-2xl font-black">VERIFY & ACTIVATE</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        let selectedType = '';
+
+        function selectBoost(type, price) {
+            selectedType = type;
+            document.getElementById('pay-amount').innerText = price;
+            document.getElementById('payment-modal').classList.remove('hidden');
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        async function submitBoost() {
+            const txid = document.getElementById('txid-input').value;
+            if(!txid) return alert("Please paste the TXID");
+
+            tg.MainButton.show();
+            tg.MainButton.setText("VERIFYING...");
+            
+            const res = await fetch(`https://your-api.com/boost/apply`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: tg.initDataUnsafe.chat?.id,
+                    txid: txid,
+                    multiplier: selectedType.replace('x', '')
+                })
+            });
+
+            if(res.ok) {
+                tg.HapticFeedback.notificationOccurred('success');
+                tg.close();
+            } else {
+                tg.MainButton.hide();
+                alert("Verification failed. Check TXID.");
+            }
+        }
+    </script>
+</body>
+</html>
